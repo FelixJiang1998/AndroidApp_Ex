@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">ex1</string>
+
+    <string-array name="majors">
+        <item>计算机</item>
+        <item>软件工程</item>
+        <item>物联网</item>
+    </string-array>
+
+    <string-array name="names">
+        <item>赵明</item>
+        <item>李晓</item>
+        <item>王丽</item>
+    </string-array>
+
+</resources>
