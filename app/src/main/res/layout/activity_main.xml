@@ -50,7 +50,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:text="运动"
-        app:layout_constraintStart_toEndOf="@+id/checkBox"
+        app:layout_constraintStart_toEndOf="@+id/checkBox1"
         app:layout_constraintTop_toTopOf="@+id/guideline2" />
 
     <CheckBox
@@ -253,7 +253,7 @@
         app:layout_constraintGuide_begin="300dp" />
 
     <CheckBox
-        android:id="@+id/checkBox"
+        android:id="@+id/checkBox1"
         android:layout_width="wrap_content"
         android:layout_height="24dp"
         android:layout_marginStart="8dp"
@@ -270,7 +270,7 @@
         app:layout_constraintGuide_begin="340dp" />
 
     <RadioGroup
-        android:id="@+id/RatioGroup_sex"
+        android:id="@+id/RadioGroup_sex"
         android:layout_width="228dp"
         android:layout_height="31dp"
         android:layout_marginStart="8dp"

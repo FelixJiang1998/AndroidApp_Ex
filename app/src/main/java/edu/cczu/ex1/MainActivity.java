@@ -1,8 +1,13 @@
 package edu.cczu.ex1;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.ContextMenu;
@@ -15,11 +20,18 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 
@@ -35,6 +47,11 @@ public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private Spinner spinner;
     private float BMI;
+
+
+    private Service_calBMI service_calBMI=null;
+
+    static ArrayList<Student> studentList;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -55,36 +72,43 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        final EditText txtName = (EditText) findViewById(R.id.editText_name);
+        final EditText txtHeight= (EditText) findViewById(R.id.editText_height);
+        final EditText txtWeight= (EditText) findViewById(R.id.editText_weight);
+        final RadioGroup radioGroup_Sex= (RadioGroup) findViewById(R.id.RadioGroup_sex);
+
+
+        listView = (ListView) findViewById(R.id.listview);
+
+        studentList = new ArrayList<Student>();
+        Student ZhaoMing=new Student("赵明",175,72,"男","110","计算机");
+        Student LiXiao=new Student("李晓",173,86,"男","010","软件工程");
+        Student WangLi=new Student("王丽",163,48,"女","001","物联网");
+
+        studentList.add(0,ZhaoMing);
+        studentList.add(1,LiXiao);
+        studentList.add(2,WangLi);
 
         //姓名列表
         nameList = new ArrayList<String>();
-        nameList.add("赵明");
-        nameList.add("李晓");
-        nameList.add("王丽");
+        for(Student stu:studentList)
+            nameList.add(stu.getName());
 
         //专业名称的列表
         majorList = new ArrayList<String>();
-        majorList.add("计算机");
-        majorList.add("软件工程");
-        majorList.add("物联网");
+        for(Student stu:studentList)
+            majorList.add(stu.getMajor());
 
         aryAdapter_major = new ArrayAdapter<String>(this, R.layout.support_simple_spinner_dropdown_item, majorList);
-
         spinner = (Spinner) findViewById(R.id.spinner);
         spinner.setAdapter(aryAdapter_major);
         spinner.setSelection(0, true);//设置默认选项为“计算机”
 
-        //点击关闭按钮退出app
-        Button btn_exit = (Button) findViewById(R.id.button_close);//关闭按钮
-        btn_exit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                System.exit(0);
-            }
-        });
+        final Intent serviceIntent=new Intent(MainActivity.this,Service_calBMI.class);
+        bindService(serviceIntent,BMI_connection,BIND_AUTO_CREATE);
 
         aryAdapter_name = new ArrayAdapter<String>(this, android.R.layout.simple_expandable_list_item_1, nameList);
-        listView = (ListView) findViewById(R.id.listview);
+
         listView.setAdapter(aryAdapter_name);
         listView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
             @Override
@@ -93,32 +117,89 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //点击关闭按钮退出app
+        Button btn_exit = (Button) findViewById(R.id.button_close);//关闭按钮
+        btn_exit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.exit(0);
+                unbindService(BMI_connection);
+            }
+        });
+
         //添加按钮的点击事件
         Button btn_add = (Button) findViewById(R.id.button_add);//添加按钮
         btn_add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EditText txtName = (EditText) findViewById(R.id.editText_name);
+
                 if (TextUtils.isEmpty(txtName.getText().toString()))
                     Toast.makeText(getApplicationContext(), "姓名不可为空", Toast.LENGTH_SHORT).show();
                 else {
-                    nameList.add(txtName.getText().toString());
+                    //怎么优化？？
+                    String name=txtName.getText().toString();
+                    Integer height= Integer.parseInt(txtHeight.getText().toString());
+                    Integer weight= Integer.parseInt(txtWeight.getText().toString());
+                    RadioButton radioButton= (RadioButton) MainActivity.this.findViewById(
+                            radioGroup_Sex.getCheckedRadioButtonId());
+                    String sex= (String) radioButton.getText();
+                    String hobby;
+                    CheckBox checkBox1= (CheckBox) findViewById(R.id.checkBox1);
+                    CheckBox checkBox2= (CheckBox) findViewById(R.id.checkBox2);
+                    CheckBox checkBox3= (CheckBox) findViewById(R.id.checkBox3);
+                    int temp=0;
+                    if(checkBox1.isChecked()) temp+=100;
+                    if(checkBox2.isChecked()) temp+=10;
+                    if(checkBox3.isChecked()) temp+=1;
+                    hobby= String.valueOf(temp);
+                    String major=spinner.getSelectedItem().toString();
+                    Student student=new Student(name,height,weight,sex,hobby,major);
+                    nameList.clear();
+                    for(Student stu:studentList)
+                        nameList.add(stu.getName());
+                    studentList.add(student);
                     aryAdapter_name.notifyDataSetChanged();
                 }
             }
         });
 
+
+        //计算按钮的点击事件
         Button btn_cal = (Button) findViewById(R.id.button_cal);
         btn_cal.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                float weight = Float.parseFloat(((EditText) findViewById(R.id.editText_weight)).getText().toString());
-                float height = Float.parseFloat(((EditText) findViewById(R.id.editText_height)).getText().toString());
-                BMI = weight / height / height;
 
+                if(service_calBMI==null){
+                    Toast.makeText(getApplicationContext(),"unBind!",Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                double weight = Float.parseFloat(((EditText) findViewById(R.id.editText_weight)).getText().toString());
+                double height = Float.parseFloat(((EditText) findViewById(R.id.editText_height)).getText().toString())/100.0;
+                double res=service_calBMI.cal_BMI(height,weight);
+                String constitution;
+                if(res<18.5)constitution="偏瘦";
+                else if(res<24) constitution="正常";
+                else if(res<28)constitution="偏胖";
+                else constitution="肥胖";
+                if(res==22) constitution="非常正常";
+                String msg=txtName.getText().toString()+"的BMI指数为"+res+"，体重"+constitution;
+                Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_SHORT).show();
             }
         });
+
     }
+
+    private ServiceConnection BMI_connection=new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            service_calBMI=((Service_calBMI.LocalBinder)service).getService();
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            service_calBMI=null;
+        }
+    };
 
     //设置菜单
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -155,19 +236,42 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        int id = (int) info.id;
+        int id = (int) info.position;
         switch (item.getItemId()) {
             case CONTEXT_MENU_1:
                 Intent intent = new Intent(MainActivity.this, ShowInfo.class);
-//               intent.putExtra("data",temp.toArray());
-//
+                Bundle bundle=new Bundle();
+                bundle.putSerializable("student",studentList.get(id));
+                intent.putExtras(bundle);
                 startActivityForResult(intent, SHOW_INFO);
                 return true;
             default:
                 return false;
         }
     }
+public void Trial(){
+    Resources res=getResources();
+    ArrayList<String> nameList1=new ArrayList<String >();
+    XmlPullParser parser=res.getXml(R.xml.student);
+    try {
+        for(int event=parser.getEventType();event!=XmlPullParser.END_DOCUMENT;event=parser.next()){
+            if(event==XmlPullParser.START_TAG){
+                if(parser.getName().equals("studnet")){
+//                    Toast.makeText(getApplicationContext(),parser.getAttributeValue(),Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
 
+    String nameTmp=null;
+//        getAttributeResourceValue
+//        nameList1.add();
+
+    nameList1.add(studentList.get(0).getName());
+
+    }
 
     //以下功能为使得EditText在完成输入时，自动失去焦点，收起软键盘
     // 获取点击事件

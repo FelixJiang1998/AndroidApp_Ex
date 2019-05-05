@@ -1,0 +1,20 @@
+<student>
+    <person name="赵明"
+        sex="男"
+        major="计算机"
+        height="175"
+        weight="72"
+        hobby="110" />
+    <person name="李晓"
+        sex="男"
+        major="软件工程"
+        height="173"
+        weight="86"
+        hobby="010" />
+    <person name="王丽"
+        sex="女"
+        major="物联网"
+        height="163"
+        weight="48"
+        hobby="001" />
+</student>

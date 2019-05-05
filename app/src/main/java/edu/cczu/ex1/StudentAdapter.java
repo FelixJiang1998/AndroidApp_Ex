@@ -9,18 +9,17 @@ import android.widget.TextView;
 import java.util.List;
 
 public class StudentAdapter extends BaseAdapter {
-    private List<Student> StuData;
+    private Student student;
     private LayoutInflater inflater;
 
-    public StudentAdapter(List<Student> stuData, LayoutInflater inflater) {
-        StuData = stuData;
+    public StudentAdapter(Student stuData, LayoutInflater inflater) {
+        student = stuData;
         this.inflater = inflater;
     }
 
     @Override
     public int getCount() {
-        //适配器是用来往listview传数据的，所以数据有多少条就返回多少
-        return StuData.size();
+        return 0;
     }
 
     @Override
@@ -38,7 +37,6 @@ public class StudentAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View view = inflater.inflate(R.layout.activity_show_info, null);
-        Student student = StuData.get(position);
 
         TextView textView_name = (TextView) view.findViewById(R.id.textView_name);
         TextView textView_height = (TextView) view.findViewById(R.id.textView_height);
@@ -50,9 +48,9 @@ public class StudentAdapter extends BaseAdapter {
         textView_name.append(student.getName());
         textView_height.append(student.getHeight() + "cm");
         textView_weight.append(student.getWeight() + "kg");
-        textView_sex.append(Sex_int2String(student.getSex()));
+        textView_sex.append(student.getSex());
         textView_hobby.append(hobby_toString(student));
-        textView_major.append(major_int2String(student.getMajor()));
+        textView_major.append(student.getMajor());
         return view;
     }
 
@@ -78,14 +76,14 @@ public class StudentAdapter extends BaseAdapter {
         return res;
     }
 
-    public String major_int2String(int Major) {
-        switch (Major) {
-            case 1:
-                return "软件工程";
-            case 2:
-                return "物联网";
-            default:
-                return "计算机";//默认为计算机：0
-        }
-    }
+//    public String major_int2String(int Major) {
+//        switch (Major) {
+//            case 1:
+//                return "软件工程";
+//            case 2:
+//                return "物联网";
+//            default:
+//                return "计算机";//默认为计算机：0
+//        }
+//    }
 }
